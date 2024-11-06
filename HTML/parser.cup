@@ -1,0 +1,158 @@
+	/*
+   Simple +/-/* expression language; 
+   parser evaluates constant expressions on the fly
+*/
+
+package cup.example;
+
+import java_cup.runtime.*;
+import cup.example.Lexer;
+import java.io.IOException;
+import java.io.File;
+import java.io.FileInputStream;
+
+parser code {:
+  protected Lexer lexer;
+:}
+
+/* define how to connect to the scanner! */
+init with {:
+  ComplexSymbolFactory f = new ComplexSymbolFactory();
+  symbolFactory = f;
+  File file = new File("input.txt");
+  FileInputStream fis = null;
+  try {
+    fis = new FileInputStream(file);
+  } catch (IOException e) {
+    e.printStackTrace();
+  } 
+  lexer = new Lexer(f,fis);
+:};
+scan with {: return lexer.next_token(); :};
+
+/* Terminals (tokens returned by the scanner). */
+terminal            SEMI, PLUS, MINUS, UMINUS, TIMES, LPAREN, RPAREN, H1, H2, H3, H4, H5, H6, 
+					UL, LI, TABLE, TR, A, ABBE, ACRONYM, ADDRESS, APPLET, B, BASEFONT, BDO, BIG, 
+					BLINK, BLOCKQUOTE, BODY, CAPTION, CENTER, CITE, COLGROUP, DD, DFN, DIR, DIV, DL, DT, EM, 
+					FIELDSET, FONT, FORM, FRAMESET, HEAD, HTML, I, ILAYER, INS, KBD, LABEL, LAYER, LEGEND, LISTING, 
+					MAP, MARQUEE, MENU, MULTICOL, NOBR, NOEMBED, NOFRAMES, NOSCRIPT, OBJECT, OL, OPTGROUP, OPTION, P, 
+					PRE, Q, S, SAMP, SCRIPT, SELECT, SEVER, SMALL, SPAN, STRIKE, STRONG, STYLE, SUB, SUP, TD, TEXTAREA, TH, 
+					TITLE, TT, U, VAR, XMP, CHARLITERAL, INTEGER_LITERAL, FLOATING_POINT_LITERAL, IDENTIFIER, STRING_LITERAL,
+					CHARACTER_LITERAL, ABBRTAG, START_TAG, END_TAG, CLOSE_TAG;
+
+
+/* Non terminals */
+non terminal            expr_list;
+non terminal			tags_list, base_structure, html_start, head_start, body_start, content_start, content_end, body_end, head_end, html_end;
+
+/* Precedences */
+
+precedence left START_TAG, END_TAG, CLOSE_TAG;
+
+start with base_structure;
+
+/* The grammar rules */
+tags_list ::= H1
+			|H2
+			|H3
+			|H4
+			|H5
+			|H6
+			|UL
+			|LI
+			|TABLE
+			|TR
+			|A
+			|ABBE
+			|ACRONYM
+			|ADDRESS
+			|APPLET
+			|B
+			|BASEFONT
+			|BDO
+			|BIG
+			|BLINK
+			|BLOCKQUOTE
+			|CAPTION
+			|CENTER
+			|CITE
+			|COLGROUP
+			|DD
+			|DFN
+			|DIR
+			|DIV
+			|DL
+			|DT
+			|EM
+			|FIELDSET
+			|FONT
+			|FORM
+			|FRAMESET
+			|I
+			|ILAYER
+			|INS
+			|KBD
+			|LABEL
+			|LAYER
+			|LEGEND
+			|LISTING
+			|MAP
+			|MARQUEE
+			|MENU
+			|MULTICOL
+			|NOBR
+			|NOEMBED
+			|NOFRAMES
+			|NOSCRIPT
+			|OBJECT
+			|OL
+			|OPTGROUP
+			|OPTION
+			|P
+			|PRE
+			|Q
+			|S
+			|SAMP
+			|SCRIPT
+			|SELECT
+			|SEVER
+			|SMALL
+			|SPAN
+			|STRIKE
+			|STRONG
+			|STYLE
+			|SUB
+			|SUP
+			|TD
+			|TEXTAREA
+			|TH
+			|TITLE
+			|TT
+			|U
+			|VAR
+			|XMP
+			|CHARLITERAL
+			|INTEGER_LITERAL
+			|FLOATING_POINT_LITERAL
+			|IDENTIFIER
+			|STRING_LITERAL
+			|CHARACTER_LITERAL
+			|ABBRTAG
+			|START_TAG
+			|END_TAG
+			|CLOSE_TAG
+			;
+			
+
+
+
+base_structure ::= html_start head_start body_start content_start content_end body_end head_end html_end;
+
+html_start ::= START_TAG HTML END_TAG;
+html_end ::= CLOSE_TAG HTML END_TAG;
+head_start ::= START_TAG HEAD END_TAG;
+head_end ::= CLOSE_TAG HEAD END_TAG;
+body_start ::= START_TAG BODY END_TAG;
+body_end ::= CLOSE_TAG BODY END_TAG;
+content_start ::= START_TAG tags_list END_TAG;
+content_end ::= CLOSE_TAG tags_list END_TAG;
