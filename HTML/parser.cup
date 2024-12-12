@@ -1,8 +1,3 @@
-	/*
-   Simple +/-/* expression language; 
-   parser evaluates constant expressions on the fly
-*/
-
 package cup.example;
 
 import java_cup.runtime.*;
@@ -15,7 +10,7 @@ parser code {:
   protected Lexer lexer;
 :}
 
-/* define how to connect to the scanner! */
+/* define how to connect to the scanner */
 init with {:
   ComplexSymbolFactory f = new ComplexSymbolFactory();
   symbolFactory = f;
@@ -26,133 +21,499 @@ init with {:
   } catch (IOException e) {
     e.printStackTrace();
   } 
-  lexer = new Lexer(f,fis);
+  lexer = new Lexer(f, fis);
 :};
 scan with {: return lexer.next_token(); :};
 
-/* Terminals (tokens returned by the scanner). */
-terminal            SEMI, PLUS, MINUS, UMINUS, TIMES, LPAREN, RPAREN, H1, H2, H3, H4, H5, H6, 
-					UL, LI, TABLE, TR, A, ABBE, ACRONYM, ADDRESS, APPLET, B, BASEFONT, BDO, BIG, 
-					BLINK, BLOCKQUOTE, BODY, CAPTION, CENTER, CITE, COLGROUP, DD, DFN, DIR, DIV, DL, DT, EM, 
-					FIELDSET, FONT, FORM, FRAMESET, HEAD, HTML, I, ILAYER, INS, KBD, LABEL, LAYER, LEGEND, LISTING, 
-					MAP, MARQUEE, MENU, MULTICOL, NOBR, NOEMBED, NOFRAMES, NOSCRIPT, OBJECT, OL, OPTGROUP, OPTION, P, 
-					PRE, Q, S, SAMP, SCRIPT, SELECT, SEVER, SMALL, SPAN, STRIKE, STRONG, STYLE, SUB, SUP, TD, TEXTAREA, TH, 
-					TITLE, TT, U, VAR, XMP, CHARLITERAL, INTEGER_LITERAL, FLOATING_POINT_LITERAL, IDENTIFIER, STRING_LITERAL,
-					CHARACTER_LITERAL, ABBRTAG, START_TAG, END_TAG, CLOSE_TAG;
+/* Terminals (tokens) */
+terminal String TEXT_CONTENT, STRIKE, SUB, SUP, TT;
+terminal SEMI, PLUS, MINUS, UMINUS, TIMES, LPAREN, RPAREN,
+        H1, H2, H3, H4, H5, H6, UL, LI, TABLE, TR, A, ABBE, ACRONYM, ADDRESS, APPLET, 
+        B, BASEFONT, BDO, BIG, BLINK, BLOCKQUOTE, BODY, CAPTION, CENTER, CITE, COLGROUP,
+        DD, DFN, DIR, DIV, DL, DT, EM, FIELDSET, FONT, FORM, FRAMESET, HEAD, HTML_TAG, I, ILAYER,
+        INS, KBD, LABEL, LAYER, LEGEND, LISTING, MAP, MARQUEE, MENU, MULTICOL, NOBR, NOEMBED,
+        NOFRAMES, NOSCRIPT, OBJECT, OL, OPTGROUP, OPTION, P, PRE, Q, S, SAMP, SCRIPT, SELECT,
+        SEVER, SMALL, SPAN, STRONG, STYLE, TD, TEXTAREA, TH, TITLE, U,
+        VAR, XMP, CHARLITERAL, INTEGER_LITERAL, FLOATING_POINT_LITERAL, IDENTIFIER, STRING_LITERAL,
+        CHARACTER_LITERAL, ABBRTAG, START_TAG, END_TAG, CLOSE_TAG, META, LINK, BASE, B_TAG, I_TAG, U_TAG, STRONG_TAG, FRAME;
+terminal ISINDEX, NEXTID, BGSOUND, HR, BR, IMG, WBR, ABBR, CODE;
 
 
-/* Non terminals */
-non terminal            expr_list;
-non terminal			tags_list, base_structure, html_start, head_start, body_start, content_start, content_end, body_end, head_end, html_end;
+/* Non-terminals */
+non terminal applet_tag, applet_content, applet_content_list;
+non terminal abbr_tag;
+non terminal acronym_tag;
+non terminal a_tag, a_content_list, a_content;
+non terminal address_tag, address_content_list, address_content;
+non terminal body_tag, body_content, body_content_list;
+non terminal block, block_content, block_content_list;
+non terminal content_style, cite_tag, code_tag, dfn_tag, em_tag, kbd_tag, strong_tag, var_tag;
+non terminal html_tag, html_content;
+non terminal head_tag, head_content, head_content_list;
+non terminal heading , h1_tag, h2_tag, h3_tag, h4_tag, h5_tag, h6_tag;
+non terminal heading_a_tag, h1_tag_a_tag, h2_tag_a_tag, h3_tag_a_tag, h4_tag_a_tag, h5_tag_a_tag, h6_tag_a_tag;
+non terminal title_tag;
+non terminal frameset_tag, frameset_content, frameset_content_list, noframes_tag;
+non terminal text, text_content, text_content_list;
+non terminal p_tag;
+non terminal text_content_a_tag, text_a_tag;
+non terminal physical_style, b_tag, big_tag, i_tag, font_tag, small_tag, s_tag, strike_tag, sub_tag, sup_tag, tt_tag, u_tag;
+non terminal blockquote_tag, basefont_tag, center_tag, div_tag;
+non terminal dir_tag, li_tag, li_tag_list;
+non terminal flow, flow_content, flow_content_list;
+non terminal dt_tag, dl_tag, dl_content, dl_content_list , dd_tag;
+non terminal q_tag;
 
-/* Precedences */
 
-precedence left START_TAG, END_TAG, CLOSE_TAG;
+/* Grammar Rules */
+html_tag ::= START_TAG HTML_TAG END_TAG html_content :s CLOSE_TAG HTML_TAG END_TAG
+           {:   System.out.println("Valid <html>"); :}
+           ;
 
-start with base_structure;
+html_content ::= head_tag body_tag
+               {: System.out.println("Valid html_content head body"); :}
+               | head_tag frameset_tag
+               {: System.out.println("Valid html_content head frameset"); :}
+               ;
 
-/* The grammar rules */
-tags_list ::= H1
-			|H2
-			|H3
-			|H4
-			|H5
-			|H6
-			|UL
-			|LI
-			|TABLE
-			|TR
-			|A
-			|ABBE
-			|ACRONYM
-			|ADDRESS
-			|APPLET
-			|B
-			|BASEFONT
-			|BDO
-			|BIG
-			|BLINK
-			|BLOCKQUOTE
-			|CAPTION
-			|CENTER
-			|CITE
-			|COLGROUP
-			|DD
-			|DFN
-			|DIR
-			|DIV
-			|DL
-			|DT
-			|EM
-			|FIELDSET
-			|FONT
-			|FORM
-			|FRAMESET
-			|I
-			|ILAYER
-			|INS
-			|KBD
-			|LABEL
-			|LAYER
-			|LEGEND
-			|LISTING
-			|MAP
-			|MARQUEE
-			|MENU
-			|MULTICOL
-			|NOBR
-			|NOEMBED
-			|NOFRAMES
-			|NOSCRIPT
-			|OBJECT
-			|OL
-			|OPTGROUP
-			|OPTION
-			|P
-			|PRE
-			|Q
-			|S
-			|SAMP
-			|SCRIPT
-			|SELECT
-			|SEVER
-			|SMALL
-			|SPAN
-			|STRIKE
-			|STRONG
-			|STYLE
-			|SUB
-			|SUP
-			|TD
-			|TEXTAREA
-			|TH
-			|TITLE
-			|TT
-			|U
-			|VAR
-			|XMP
-			|CHARLITERAL
-			|INTEGER_LITERAL
-			|FLOATING_POINT_LITERAL
-			|IDENTIFIER
-			|STRING_LITERAL
-			|CHARACTER_LITERAL
-			|ABBRTAG
-			|START_TAG
-			|END_TAG
-			|CLOSE_TAG
+head_tag ::= START_TAG HEAD END_TAG head_content_list CLOSE_TAG HEAD END_TAG
+           {: System.out.println("Valid <head>"); :}
+           ;
+
+head_content_list ::= head_content head_content_list
+                   {: System.out.println("Valid head_content_list head_content"); :}
+                   | 
+                   {: System.out.println("Valid head_content_list empty "); :}
+                   ;
+
+head_content ::= BASE
+               {: System.out.println("Valid head_content <base>"); :}
+               | ISINDEX
+               {: System.out.println("Valid head_content <isindex>"); :}
+               | LINK
+               {: System.out.println("Valid head_content <link>"); :}
+               | META
+               {: System.out.println("Valid head_content <meta>"); :}
+               | NEXTID
+               {: System.out.println("Valid head_content <nextid>"); :}
+               | title_tag
+               {: System.out.println("Valid head_content <title>"); :}
+               ;
+
+title_tag ::= START_TAG TITLE END_TAG TEXT_CONTENT CLOSE_TAG TITLE END_TAG
+            {: System.out.println("Valid <title> tag"); :}
+            ;
+
+body_tag ::= START_TAG BODY END_TAG body_content_list CLOSE_TAG BODY END_TAG
+           {: System.out.println("Valid <body> tag"); :} 
+		   ;
+body_content_list ::= body_content body_content_list
+                   {: System.out.println("Valid body_content_list"); :}
+                   | 
+                   {: System.out.println("Valid body_content_list empty"); :}
+                   ;
+
+body_content ::= BGSOUND
+               {: System.out.println("Valid body_content <bgsound>"); :}
+               | HR
+               {: System.out.println("Valid body_content <hr>"); :}
+               | address_tag
+               {: System.out.println("Valid body_content <address>"); :}
+               | block
+               {: System.out.println("Valid body_content block"); :}
+               | text
+               {: System.out.println("Valid body_content text_content"); :}
+               | 
+               {: System.out.println("Valid body_content empty"); :}
+               ;
+
+block ::= block_content_list
+        {: System.out.println("Valid block"); :}
+        ;
+
+block_content_list ::= block_content block_content_list
+                   {: System.out.println("Valid block_content_list block_content"); :}
+                   | 
+                   {: System.out.println("Valid block_content_list empty"); :}
+                   ;
+
+block_content ::= ISINDEX 
+                {: System.out.println("Valid block_content <isindex>"); :}
+                | blockquote_tag
+                {: System.out.println("Valid block_content <blockquote>"); :}
+                | basefont_tag
+                {: System.out.println("Valid block_content <basefont>"); :}
+                | center_tag
+                {: System.out.println("Valid block_content <center>"); :}
+                | dir_tag
+                {: System.out.println("Valid block_content <dir>"); :}
+                | div_tag
+                {: System.out.println("Valid block_content <div>"); :}
+                | dl_tag
+                {: System.out.println("Valid block_content <dl>"); :}
+                | 
+                {: System.out.println("Valid block_content empty"); :}
+                ;
+
+blockquote_tag ::= START_TAG BLOCKQUOTE END_TAG body_content CLOSE_TAG BLOCKQUOTE END_TAG
+                {: System.out.println("Valid <blockquote> tag"); :}
+                ;
+
+basefont_tag ::= START_TAG BASEFONT END_TAG body_content CLOSE_TAG BASEFONT END_TAG
+               {: System.out.println("Valid <basefont> tag"); :}
+               ;
+
+center_tag ::= START_TAG CENTER END_TAG body_content CLOSE_TAG CENTER END_TAG
+             {: System.out.println("Valid <center> tag"); :}
+             ;
+
+div_tag ::= START_TAG DIV END_TAG body_content CLOSE_TAG DIV END_TAG
+          {: System.out.println("Valid <div> tag"); :}
+          ;
+
+flow_content ::= block       
+               | text  
+               {: System.out.println("Valid flow_content text "); :}     
+               ;
+
+flow ::= flow_content flow
+       {: System.out.println("Valid flow_content flow "); :}     
+       | 
+       {: System.out.println("Valid flow_content empty "); :}     
+       ;
+
+li_tag ::= START_TAG LI END_TAG flow CLOSE_TAG LI END_TAG
+          {: System.out.println("Valid <li> tag "); :}   
+		  ;
+li_tag_list ::= li_tag li_tag_list
+              {: System.out.println("Valid li_tag_list <li> tag "); :}   
+              | 
+              {: System.out.println("Valid li_tag_lits empty "); :}   
+              ;
+
+dir_tag ::= START_TAG DIR END_TAG li_tag_list CLOSE_TAG DIR END_TAG
+          {: System.out.println("Valid <dir> tag"); :}
+          ;
+
+dd_tag ::= START_TAG DD END_TAG flow CLOSE_TAG DD END_TAG
+          {: System.out.println("Valid <dd> tag"); :} 
+		  ;
+dl_content ::= dt_tag dd_tag
+             {: System.out.println("Valid dl_content tag"); :}
+             ;
+			
+dl_tag ::= START_TAG DL END_TAG dl_content CLOSE_TAG DL END_TAG
+          {: System.out.println("Valid <dl> tag"); :}
+          ;
+
+dt_tag ::= START_TAG DT END_TAG text CLOSE_TAG DT END_TAG
+          {: System.out.println("Valid <dt> tag"); :}
+          ;
+
+a_tag ::= START_TAG A END_TAG a_content_list CLOSE_TAG A END_TAG
+        {: System.out.println("Valid <a> tag"); :}
+        ;
+
+a_content_list ::= a_content a_content_list
+                {: System.out.println("Valid <a> content list"); :}
+                | 
+                {: System.out.println("Valid <a> empty"); :}
+                ;
+
+a_content ::= heading_a_tag 
+              {: System.out.println("Valid heading a_content"); :}
+              | text_a_tag 
+              {: System.out.println("Valid  text a_content"); :}		  
+			  ;
+address_tag ::= START_TAG ADDRESS END_TAG address_content_list CLOSE_TAG ADDRESS END_TAG
+              {: System.out.println("Valid <address> tag"); :}
+              ;
+
+address_content_list ::= address_content address_content_list
+                      {: System.out.println("Valid address_content_list address_content"); :}
+                      | 
+                      {: System.out.println("Valid address_content_list empty "); :}
+                      ;
+
+address_content ::= p_tag
+                  {: System.out.println("Valid address_content_list <p> tag"); :}
+                  | text
+                  {: System.out.println("Valid address_content_list text_content"); :}
+                  ;
+
+text_a_tag ::= text_content_a_tag text_a_tag
+        {: System.out.println("Valid text_content_a_tag <text>"); :}
+        | 
+        {: System.out.println("Valid text_content_a_tag empty"); :}
+        ;
+
+text_content_a_tag ::=  BR
+                    {: System.out.println("Valid text_content <br>"); :}
+                    | IMG
+                    {: System.out.println("Valid text_content <img>"); :}
+                    | WBR
+                    {: System.out.println("Valid text_content <wbr>"); :}
+                    | content_style
+                    {: System.out.println("Valid text_content content_style"); :}
+                    | physical_style
+                    {: System.out.println("Valid text_content physical_style"); :}
+                    | TEXT_CONTENT:text_content_html
+                    {: System.out.println("Valid text_content text " + text_content_html);  :}
+                    ;
+
+text ::= text_content text
+        {: System.out.println("Valid text_content <text>"); :}
+        | 
+        {: System.out.println("Valid text empty"); :}
+        ;
+
+text_content ::=  BR
+                {: System.out.println("Valid text_content <br>"); :}
+                | IMG
+                {: System.out.println("Valid text_content <img>"); :}
+                | WBR
+                {: System.out.println("Valid text_content <wbr>"); :}
+                | a_tag
+                {: System.out.println("Valid text_content <a>"); :}
+                | content_style
+                {: System.out.println("Valid text_content content_style"); :}
+                | physical_style
+                {: System.out.println("Valid text_content physical_style"); :}
+                | TEXT_CONTENT:text_content_html
+                {: System.out.println("Valid text_content text " + text_content_html);  :}
+                ;
+
+content_style ::=  abbr_tag
+                {: System.out.println("Valid  content_style <abbr> tag"); :}
+                | acronym_tag
+                {: System.out.println("Valid  content_style <acronym> tag"); :}
+                | cite_tag
+                {: System.out.println("Valid  content_style <cite> tag"); :}
+                | code_tag
+                {: System.out.println("Valid  content_style <cite> tag"); :}
+                | dfn_tag
+                {: System.out.println("Valid  content_style <dfn> tag"); :}
+                | em_tag
+                {: System.out.println("Valid  content_style <em> tag"); :}
+                | kbd_tag
+                {: System.out.println("Valid  content_style <kbd> tag"); :}
+                | q_tag
+                {: System.out.println("Valid  content_style <q> tag"); :}
+                | strong_tag
+                {: System.out.println("Valid  content_style <strong> tag"); :}
+                | var_tag
+                {: System.out.println("Valid  content_style <var> tag"); :}
+               ;
+
+abbr_tag ::= START_TAG ABBR END_TAG text CLOSE_TAG ABBR END_TAG
+            {:  System.out.println("Valid  <abbr> tag"); :}
+            ;
+
+acronym_tag ::= START_TAG ACRONYM END_TAG text CLOSE_TAG ACRONYM END_TAG	
+            {:  System.out.println("Valid <acronym> tag"); :}
+            ;
+
+cite_tag ::=  START_TAG CITE END_TAG text :cite_html CLOSE_TAG CITE END_TAG
+            {:  System.out.println("Valid  <cite> tag"+ cite_html); :}
+            ;
+
+code_tag ::= START_TAG CODE END_TAG text CLOSE_TAG CODE END_TAG
+            {: System.out.println("Valid <code> tag"); :}
+            ;
+
+dfn_tag ::= START_TAG DFN END_TAG text CLOSE_TAG DFN END_TAG
+            {: System.out.println("Valid <dfn> tag"); :}
+            ;
+
+em_tag ::= START_TAG EM END_TAG text CLOSE_TAG EM END_TAG
+            {: System.out.println("Valid <em> tag"); :}
+            ;
+
+kbd_tag ::= START_TAG KBD END_TAG text CLOSE_TAG KBD END_TAG
+            {: System.out.println("Valid <kbd> tag"); :}
+            ;
+
+q_tag ::= START_TAG Q END_TAG text CLOSE_TAG Q END_TAG
+        {: System.out.println("Valid <q> tag"); :}
+        ;
+
+strong_tag ::= START_TAG STRONG END_TAG text CLOSE_TAG STRONG END_TAG
+            {: System.out.println("Valid <em> tag"); :}
+            ;
+
+var_tag ::= START_TAG VAR END_TAG text CLOSE_TAG VAR END_TAG
+            {: System.out.println("Valid <var> tag"); :}
+            ;
+
+physical_style ::= b_tag
+                {: System.out.println("Valid physical_style <b> tag"); :}
+                | big_tag
+                {: System.out.println("Valid physical_style <big> tag"); :}
+                | i_tag
+                {: System.out.println("Valid physical_style <i> tag"); :}
+                | font_tag
+                {: System.out.println("Valid physical_style <font> tag"); :}
+                | small_tag
+                {: System.out.println("Valid physical_style <small> tag"); :}
+                | s_tag
+                {: System.out.println("Valid physical_style <s> tag"); :}
+                | strike_tag
+                {: System.out.println("Valid physical_style <strike> tag"); :}
+                | sub_tag
+                {: System.out.println("Valid physical_style <sub> tag"); :}
+                | sup_tag
+                {: System.out.println("Valid physical_style <sup> tag"); :}
+                | tt_tag
+                {: System.out.println("Valid physical_style <tt> tag"); :}
+                | u_tag
+                {: System.out.println("Valid physical_style <u> tag"); :}
+                ;
+
+b_tag ::= START_TAG B END_TAG text CLOSE_TAG B END_TAG
+            {: System.out.println("Valid <b> tag"); :}
+            ;
+
+big_tag ::= START_TAG BIG END_TAG text CLOSE_TAG BIG END_TAG
+            {: System.out.println("Valid <big> tag"); :}
+            ;
+
+i_tag ::= START_TAG I END_TAG text CLOSE_TAG I END_TAG
+          {: System.out.println("Valid <i> tag"); :}
+          ;
+
+font_tag ::= START_TAG FONT END_TAG text CLOSE_TAG FONT END_TAG
+            {: System.out.println("Valid <font> tag"); :}
+            ;
+
+small_tag ::= START_TAG SMALL END_TAG text CLOSE_TAG SMALL END_TAG
+               {: System.out.println("Valid <small> tag"); :}
+               ;
+
+s_tag ::= START_TAG S END_TAG text CLOSE_TAG S END_TAG
+          {: System.out.println("Valid <s> tag"); :}
+          ;
+
+
+strike_tag ::= START_TAG STRIKE END_TAG text CLOSE_TAG STRIKE END_TAG
+			{: System.out.println("Valid <strike> tag"); :}
+		  	;
+
+sub_tag ::= START_TAG SUB END_TAG text CLOSE_TAG SUB END_TAG
+			{: System.out.println("Valid <sub> tag"); :}
+		  	;
+
+sup_tag ::= START_TAG SUP END_TAG text CLOSE_TAG SUP END_TAG
+			{: System.out.println("Valid <sup> tag"); :}
+		  	;
+
+tt_tag ::= START_TAG TT END_TAG text CLOSE_TAG TT END_TAG
+			{: System.out.println("Valid <tt> tag"); :}
+		  	;
+
+u_tag ::= START_TAG U END_TAG text CLOSE_TAG U END_TAG
+			{: System.out.println("Valid <u> tag"); :}
+		  	;
+			
+// p_tag
+
+p_tag ::= START_TAG P END_TAG text CLOSE_TAG P END_TAG
+			{: System.out.println("Valid <p> tag"); :}
+			;
+
+// frames					;
+						
+frameset_tag ::= START_TAG FRAMESET END_TAG frameset_content_list CLOSE_TAG FRAMESET END_TAG
+				{: System.out.println("Valid <frameset> tag"); :}
+				;	
+
+frameset_content_list ::=  frameset_content frameset_content_list
+						{: System.out.println("Valid frameset_content_list frameset_content"); :}
+						| 
+						{: System.out.println("Valid frameset_content_list empty"); :}
+						;
+
+frameset_content ::= START_TAG FRAME END_TAG CLOSE_TAG FRAME END_TAG
+				{: System.out.println("Valid frameset_content <frame>"); :}
+				| noframes_tag
+				{: System.out.println("Valid frameset_content <noframes>"); :}
+				;	
+
+noframes_tag ::= START_TAG NOFRAMES END_TAG body_content_list CLOSE_TAG FRAME END_TAG
+				{: System.out.println("Valid <noframes> tag"); :}
+				;
+
+heading ::= h1_tag 
+			{: System.out.println("Valid heading <h1> tag"); :}
+			| h2_tag
+			{: System.out.println("Valid heading <h2> tag"); :}
+			| h3_tag
+			{: System.out.println("Valid heading <h3> tag"); :}
+			| h4_tag
+			{: System.out.println("Valid heading <h4> tag"); :}
+			| h5_tag
+			{: System.out.println("Valid heading <h5> tag"); :}
+			| h6_tag
+			{: System.out.println("Valid heading <h6> tag"); :}
+			;
+
+heading_a_tag ::= h1_tag_a_tag
+			{: System.out.println("Valid heading a tag <h1> tag"); :}
+			| h2_tag_a_tag
+			{: System.out.println("Valid heading a_tag <h2> tag"); :}
+			| h3_tag_a_tag
+			{: System.out.println("Valid heading a_tag <h3> tag"); :}
+			| h4_tag_a_tag
+			{: System.out.println("Valid heading a_tag <h4> tag"); :}
+			| h5_tag_a_tag
+			{: System.out.println("Valid heading a_tag <h5> tag"); :}
+			| h6_tag_a_tag
+			{: System.out.println("Valid heading a_tag <h6> tag"); :}
 			;
 			
+h1_tag ::= START_TAG H1 END_TAG text CLOSE_TAG H1 END_TAG
+			{: System.out.println("Valid <h1> tag"); :}
+			;
 
-
-
-base_structure ::= html_start head_start body_start content_start content_end body_end head_end html_end;
-
-html_start ::= START_TAG HTML END_TAG;
-html_end ::= CLOSE_TAG HTML END_TAG;
-head_start ::= START_TAG HEAD END_TAG;
-head_end ::= CLOSE_TAG HEAD END_TAG;
-body_start ::= START_TAG BODY END_TAG;
-body_end ::= CLOSE_TAG BODY END_TAG;
-content_start ::= START_TAG tags_list END_TAG;
-content_end ::= CLOSE_TAG tags_list END_TAG;
+h1_tag_a_tag ::= START_TAG H1 END_TAG text_a_tag CLOSE_TAG H1 END_TAG
+			{: System.out.println("Valid <h1> tag a_tag"); :}
+			;
+			
+h2_tag ::= START_TAG H2 END_TAG text CLOSE_TAG H2 END_TAG
+			{: System.out.println("Valid <h2> tag"); :}
+			;
+			
+h2_tag_a_tag ::= START_TAG H2 END_TAG text_a_tag CLOSE_TAG H2 END_TAG
+			{: System.out.println("Valid <h2> tag a_tag"); :}
+			;
+			
+h3_tag ::= START_TAG H3 END_TAG text CLOSE_TAG H3 END_TAG
+			{: System.out.println("Valid <h3> tag"); :}
+			;
+			
+h3_tag_a_tag ::= START_TAG H3 END_TAG text_a_tag CLOSE_TAG H3 END_TAG
+			{: System.out.println("Valid <h3> tag a_tag"); :}
+			;
+			
+h4_tag ::= START_TAG H4 END_TAG text CLOSE_TAG H4 END_TAG
+			{: System.out.println("Valid <h4> tag"); :}
+			;
+			
+h4_tag_a_tag ::= START_TAG H4 END_TAG text_a_tag CLOSE_TAG H4 END_TAG
+			{: System.out.println("Valid <h4> tag a_tag"); :}
+			;
+			
+h5_tag ::= START_TAG H5 END_TAG text CLOSE_TAG H5 END_TAG
+			{: System.out.println("Valid <h5> tag"); :}
+			;
+			
+h5_tag_a_tag ::= START_TAG H5 END_TAG text_a_tag CLOSE_TAG H5 END_TAG
+			{: System.out.println("Valid <h5> tag a_tag"); :}
+			;
+			
+h6_tag ::= START_TAG H6 END_TAG text CLOSE_TAG H6 END_TAG
+			{: System.out.println("Valid <h6> tag"); :}
+			;
+			
+h6_tag_a_tag ::= START_TAG H6 END_TAG text_a_tag CLOSE_TAG H6 END_TAG
+			{: System.out.println("Valid <h6> tag a_tag"); :}
+			;	

@@ -10,11 +10,13 @@ import java.io.InputStreamReader;
 %class Lexer
 %implements sym
 %public
+%caseless
 %unicode
 %line
 %column
 %cup
 %char
+
 %{
 	StringBuilder string = new StringBuilder();
 	
@@ -53,25 +55,11 @@ import java.io.InputStreamReader;
     			(yyline+1) + " " + (yycolumn+1) + " " + yychar);
     }
     
-    private long parseLong(int start, int end, int radix) {
-    	long result = 0;
-    	long digit;
-
-    	for (int i = start; i < end; i++) {
-     		digit  = Character.digit(yycharat(i),radix);
-     		result*= radix;
-      		result+= digit;
-   		}	
-
-    	return result;
-  	}
 %}
 
 /* main character classes */
 LineTerminator = \r|\n|\r\n
 InputCharacter = [^\r\n]
-
-WhiteSpace = {LineTerminator} | [ \t\f]
 
 /* comments */
 Comment = {TraditionalComment} | {EndOfLineComment} | 
@@ -107,13 +95,15 @@ Exponent = [eE] [+-]? [0-9]+
 
 /* string and character literals */
 StringCharacter = [^\r\n\"\\]
+CharactersList = {StringCharacter}+
 SingleCharacter = [^\r\n\'\\]
-
-%state STRING, CHARLITERAL
+Newline    = \r | \n | \r\n
+Whitespace = [ \t\f] | {Newline}
 
 %%  
-
-/* keywords */
+<YYINITIAL> {
+	[ \t\n\r]+           	{ /* ignore whitespace */ }
+  {Whitespace} 		    {						  }
   "<"                              { return symbolFactory.newSymbol("START_TAG", START_TAG); }
   ">"                              { return symbolFactory.newSymbol("END_TAG", END_TAG); }
   "</"                             { return symbolFactory.newSymbol("CLOSE_TAG", CLOSE_TAG); }
@@ -155,7 +145,8 @@ SingleCharacter = [^\r\n\'\\]
   "FORM"                           { return symbolFactory.newSymbol("FORM", FORM); }
   "FRAMESET"                       { return symbolFactory.newSymbol("FRAMESET", FRAMESET); }
   "HEAD"                           { return symbolFactory.newSymbol("HEAD", HEAD); }
-  "HTML"                           { return symbolFactory.newSymbol("HTML", HTML); }
+  "HTML"                       		{ return symbolFactory.newSymbol("HTML_TAG", HTML_TAG); }
+  "ISINDEX"                        { return symbolFactory.newSymbol("ISINDEX", ISINDEX); }
   "I"                              { return symbolFactory.newSymbol("I", I); }
   "ILAYER"                         { return symbolFactory.newSymbol("ILAYER", ILAYER); }
   "INS"                            { return symbolFactory.newSymbol("INS", INS); }
@@ -169,6 +160,7 @@ SingleCharacter = [^\r\n\'\\]
   "MENU"                           { return symbolFactory.newSymbol("MENU", MENU); }
   "MULTICOL"                       { return symbolFactory.newSymbol("MULTICOL", MULTICOL); }
   "NOBR"                           { return symbolFactory.newSymbol("NOBR", NOBR); }
+  "NEXTID"                         { return symbolFactory.newSymbol("NEXTID", NEXTID); }
   "NOEMBED"                        { return symbolFactory.newSymbol("NOEMBED", NOEMBED); }
   "NOFRAMES"                       { return symbolFactory.newSymbol("NOFRAMES", NOFRAMES); }
   "NOSCRIPT"                       { return symbolFactory.newSymbol("NOSCRIPT", NOSCRIPT); }
@@ -195,85 +187,22 @@ SingleCharacter = [^\r\n\'\\]
   "TEXTAREA"                       { return symbolFactory.newSymbol("TEXTAREA", TEXTAREA); }
   "TH"                             { return symbolFactory.newSymbol("TH", TH); }
   "TITLE"                          { return symbolFactory.newSymbol("TITLE", TITLE); }
+  "IMG"                            { return symbolFactory.newSymbol("IMG", IMG); }
+  "WBR"                            { return symbolFactory.newSymbol("WBR", WBR); }
+  "ABBR"                           { return symbolFactory.newSymbol("ABBR", ABBR); }
+  "CODE"                           { return symbolFactory.newSymbol("CODE", CODE); }
   "TR"                             { return symbolFactory.newSymbol("TR", TR); }
   "TT"                             { return symbolFactory.newSymbol("TT", TT); }
+  "HR"                             { return symbolFactory.newSymbol("HR", HR); }
+  "BR"                             { return symbolFactory.newSymbol("BR", BR); }
   "U"                              { return symbolFactory.newSymbol("U", U); }
   "VAR"                            { return symbolFactory.newSymbol("VAR", VAR); }
   "XMP"                            { return symbolFactory.newSymbol("XMP", XMP); }
-
-/* string literal */
-  \"                              { yybegin(STRING); string.setLength(0); }
-
-/* character literal */
-  \'                              { yybegin(CHARLITERAL); }
-
-/* numeric literals */
-
-/* This is matched together with the minus, because the number is too big to 
-   be represented by a positive integer. */
-  "-2147483648"                    { return symbolFactory.newSymbol("INTEGER_LITERAL", INTEGER_LITERAL, Integer.valueOf(Integer.MIN_VALUE)); }
-
-  {DecIntegerLiteral}              { return symbolFactory.newSymbol("INTEGER_LITERAL", INTEGER_LITERAL, Integer.valueOf(yytext())); }
-  {DecLongLiteral}                 { return symbolFactory.newSymbol("INTEGER_LITERAL", INTEGER_LITERAL, new Long(yytext().substring(0,yylength()-1))); }
-
-  {HexIntegerLiteral}              { return symbolFactory.newSymbol("INTEGER_LITERAL", INTEGER_LITERAL, Integer.valueOf((int) parseLong(2, yylength(), 16))); }
-  {HexLongLiteral}                 { return symbolFactory.newSymbol("INTEGER_LITERAL", INTEGER_LITERAL, new Long(parseLong(2, yylength()-1, 16))); }
-
-  {OctIntegerLiteral}              { return symbolFactory.newSymbol("INTEGER_LITERAL", INTEGER_LITERAL, Integer.valueOf((int) parseLong(0, yylength(), 8))); }
-  {OctLongLiteral}                 { return symbolFactory.newSymbol("INTEGER_LITERAL", INTEGER_LITERAL, new Long(parseLong(0, yylength()-1, 8))); }
-
-  {FloatLiteral}                   { return symbolFactory.newSymbol("FLOATING_POINT_LITERAL", FLOATING_POINT_LITERAL, new Float(yytext().substring(0,yylength()-1))); }
-  {DoubleLiteral}                  { return symbolFactory.newSymbol("FLOATING_POINT_LITERAL", FLOATING_POINT_LITERAL, new Double(yytext())); }
-  {DoubleLiteral}[dD]              { return symbolFactory.newSymbol("FLOATING_POINT_LITERAL", FLOATING_POINT_LITERAL, new Double(yytext().substring(0,yylength()-1))); }
-
-/* comments */
-  {Comment}                        { /* ignore */ }
-
-/* whitespace */
-  {WhiteSpace}                     { /* ignore */ }
-
-/* identifiers */ 
-  {Identifier}                     { return symbolFactory.newSymbol("IDENTIFIER", IDENTIFIER, yytext()); }
-
-<STRING> {
-  \"                              { yybegin(YYINITIAL); return symbolFactory.newSymbol("STRING_LITERAL", string.toString()); }
-
-  {StringCharacter}+               { string.append(yytext()); }
-
-  /* escape sequences */
-  "\\b"                            { string.append( '\b' ); }
-  "\\t"                            { string.append( '\t' ); }
-  "\\n"                            { string.append( '\n' ); }
-  "\\f"                            { string.append( '\f' ); }
-  "\\r"                            { string.append( '\r' ); }
-  "\\\""                           { string.append( '\"' ); }
-  "\\'"                            { string.append( '\'' ); }
-  "\\\\"                           { string.append( '\\' ); }
-  \\[0-3]?{OctDigit}?{OctDigit}    { char val = (char) Integer.parseInt(yytext().substring(1), 8); 
-                                     string.append(val); }
-
-  /* error cases */
-  \\.                              { throw new RuntimeException("Illegal escape sequence \""+yytext()+"\""); }
-  {LineTerminator}                 { throw new RuntimeException("Unterminated string at end of line"); }
-}
-
-<CHARLITERAL> {
-  {SingleCharacter}\'              { yybegin(YYINITIAL); return symbolFactory.newSymbol("CHARACTER_LITERAL", yytext().charAt(0)); }
-
-  /* escape sequences */
-  "\\b"\'                          { yybegin(YYINITIAL); return symbolFactory.newSymbol("CHARACTER_LITERAL", '\b'); }
-  "\\t"\'                          { yybegin(YYINITIAL); return symbolFactory.newSymbol("CHARACTER_LITERAL", '\t'); }
-  "\\n"\'                          { yybegin(YYINITIAL); return symbolFactory.newSymbol("CHARACTER_LITERAL", '\n'); }
-  "\\f"\'                          { yybegin(YYINITIAL); return symbolFactory.newSymbol("CHARACTER_LITERAL", '\f'); }
-  "\\r"\'                          { yybegin(YYINITIAL); return symbolFactory.newSymbol("CHARACTER_LITERAL", '\r'); }
-  "\\\""\'                         { yybegin(YYINITIAL); return symbolFactory.newSymbol("CHARACTER_LITERAL", '\"'); }
-  "\\'"\'                          { yybegin(YYINITIAL); return symbolFactory.newSymbol("CHARACTER_LITERAL", '\''); }
-  "\\\\"\'                         { yybegin(YYINITIAL); return symbolFactory.newSymbol("CHARACTER_LITERAL", '\\'); }
-  \\[0-3]?{OctDigit}?{OctDigit}\'   { yybegin(YYINITIAL); 
-                                       int val = Integer.parseInt(yytext().substring(1,yylength()-1), 8); 
-                                       return symbolFactory.newSymbol("CHARACTER_LITERAL", (char) val); }
-
-  /* error cases */
-  \\.                              { throw new RuntimeException("Illegal escape sequence \""+yytext()+"\""); }
-  {LineTerminator}                 { throw new RuntimeException("Unterminated character literal at end of line"); }
-}
+  "BGSOUND"                        { return symbolFactory.newSymbol("BGSOUND", BGSOUND); }
+  
+		}			
+	
+		/* identifiers */ 
+// error fallback
+.|\n          { emit_warning("Unrecognized character '" +yytext()+"' -- ignored"); }
+ {CharactersList}             { return symbolFactory.newSymbol("TEXT_CONTENT", TEXT_CONTENT, yytext()); }
